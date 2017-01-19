@@ -147,4 +147,30 @@ describe(`${schema.Entity.name} denormalization`, () => {
 
     expect(denormalize(1, menuSchema, entities)).toMatchSnapshot();
   });
+
+  it('add computed properties to denormalized entities', () => {
+    const foodSchema = new schema.Entity('foods');
+    const menuSchema = new schema.Entity('menus', {
+      food: foodSchema
+    }, {
+      computed: {
+        getFoodId() {
+          return this.food.id;
+        }
+      },
+    });
+
+    const entities = {
+      menus: {
+        1: { id: 1, food: { id: 1 } }
+      },
+      foods: {
+        1: { id: 1 }
+      },
+    };
+
+    const result = denormalize(1, menuSchema, entities);
+    expect(result.getFoodId()).toBe(1);
+  });
+
 });

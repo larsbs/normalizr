@@ -9,13 +9,15 @@ export default class EntitySchema {
       mergeStrategy = (entityA, entityB) => {
         return { ...entityA, ...entityB };
       },
-      processStrategy = (input) => ({ ...input })
+      processStrategy = (input) => ({ ...input }),
+      computed = {},
     } = options;
 
     this._key = key;
     this._getId = typeof idAttribute === 'function' ? idAttribute : (input) => input[idAttribute];
     this._mergeStrategy = mergeStrategy;
     this._processStrategy = processStrategy;
+    this._computedProperties = computed;
     this.define(definition);
   }
 
@@ -60,6 +62,10 @@ export default class EntitySchema {
         entityCopy[key] = unvisit(entityCopy[key], schema, entities);
       }
     });
+
+    if (Object.keys(this._computedProperties).length > 0) {
+      Object.assign(entityCopy, this._computedProperties);
+    }
 
     return entityCopy;
   }
