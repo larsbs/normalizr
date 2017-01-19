@@ -65,7 +65,7 @@ const denormalizedData = denormalize({ users: [ 1, 2 ] }, mySchema, entities);
 ### Output
 
 ```js
-{ 
+{
   users: [
     { id: 1 },
     { id: 2 }
@@ -77,13 +77,13 @@ const denormalizedData = denormalize({ users: [ 1, 2 ] }, mySchema, entities);
 
 ### `Array(definition, schemaAttribute)`
 
-Creates a schema to normalize an array of entities. If the input value is an `Object` instead of an `Array`, the normalized result will be an `Array` of the `Object`'s values. 
+Creates a schema to normalize an array of entities. If the input value is an `Object` instead of an `Array`, the normalized result will be an `Array` of the `Object`'s values.
 
 *Note: The same behavior can be defined with shorthand syntax: `[ mySchema ]`*
 
 * `definition`: **required** A singular schema that this array contains *or* a mapping of schema to attribute values.
-* `schemaAttribute`: *optional* (required if `definition` is not a singular schema) The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.  
-Can be a string or a function. If given a function, accepts the following arguments:  
+* `schemaAttribute`: *optional* (required if `definition` is not a singular schema) The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.
+Can be a string or a function. If given a function, accepts the following arguments:
     * `value`: The input value of the entity.
     * `parent`: The parent object of the input array.
     * `key`: The key at which the input array appears on the parent object.
@@ -121,7 +121,7 @@ const normalizedData = normalize(data, userListSchema);
 }
 ```
 
-If your input data is an array of more than one type of entity, it is necessary to define a schema mapping. 
+If your input data is an array of more than one type of entity, it is necessary to define a schema mapping.
 
 *Note: If your data returns an object that you did not provide a mapping for, the original object will be returned in the result and an entity will not be created.*
 
@@ -158,22 +158,23 @@ const normalizedData = normalize(data, myArray);
 ### `Entity(key, definition = {}, options = {})`
 
 * `key`: **required** The key name under which all entities of this type will be listed in the normalized response. Must be a string name.
-* `definition`: A definition of the nested entities found within this entity. Defaults to empty object.  
+* `definition`: A definition of the nested entities found within this entity. Defaults to empty object.
 You *do not* need to define any keys in your entity other than those that hold nested entities. All other values will be copied to the normalized entity's output.
 * `options`:
-    - `idAttribute`: The attribute where unique IDs for each of this entity type can be found.  
-    Accepts either a string key or a function. Defaults to `id`.  
-    As a function, accepts the following arguments, in order: 
+    - `idAttribute`: The attribute where unique IDs for each of this entity type can be found.
+    Accepts either a string key or a function. Defaults to `id`.
+    As a function, accepts the following arguments, in order:
       * `value`: The input value of the entity.
       * `parent`: The parent object of the input array.
       * `key`: The key at which the input array appears on the parent object.
     - `mergeStrategy(entityA, entityB)`: Strategy to use when merging two entities with the same `id` value. Defaults to merge the more recently found entity onto the previous.
-    - `processStrategy(value, parent, key)`: Strategy to use when pre-processing the entity. Use this method to add extra data, defaults, and/or completely change the entity before normalization is complete. Defaults to returning a shallow copy of the input entity.  
-    *Note: It is recommended to always return a copy of your input and not modify the original.*  
-    The function accepts the following arguments, in order: 
+    - `processStrategy(value, parent, key)`: Strategy to use when pre-processing the entity. Use this method to add extra data, defaults, and/or completely change the entity before normalization is complete. Defaults to returning a shallow copy of the input entity.
+    *Note: It is recommended to always return a copy of your input and not modify the original.*
+    The function accepts the following arguments, in order:
       * `value`: The input value of the entity.
       * `parent`: The parent object of the input array.
       * `key`: The key at which the input array appears on the parent object.
+    - `computed`: An object containing functions that will be attached to the object when denormalizing the entity. Defaults to `{}`.
 
 #### Instance Methods
 
@@ -186,7 +187,7 @@ You *do not* need to define any keys in your entity other than those that hold n
 const data = { id_str: '123', url: 'https://twitter.com', user: { id_str: '456', name: 'Jimmy' } };
 
 const user = new schema.Entity('users', {}, { idAttribute: 'id_str' });
-const tweet = new schema.Entity('tweets', { user: user }, { 
+const tweet = new schema.Entity('tweets', { user: user }, {
     idAttribute: 'id_str',
     // Apply everything from entityB over entityA, except for "favorites"
     mergeStrategy: (entityA, entityB) => ({
@@ -195,10 +196,17 @@ const tweet = new schema.Entity('tweets', { user: user }, {
       favorites: entityA.favorites
     }),
     // Remove the URL field from the entity
-    processStrategy: (entity) => omit(entity, 'url')
+    processStrategy: (entity) => omit(entity, 'url'),
+    computed: {
+      getUserId() {
+        return this.user.id;
+      }
+    },
 });
 
 const normalizedData = normalize(data, tweet);
+const denormalizedTweet = denormalize(1, tweet, normalizedData);
+console.log(denormalizedTweet.getUserId()) // prints '456'
 ```
 
 #### Output
@@ -217,7 +225,7 @@ const normalizedData = normalize(data, tweet);
 
 Define a plain object mapping that has values needing to be normalized into Entities. *Note: The same behavior can be defined with shorthand syntax: `{ ... }`*
 
-* `definition`: **required** A definition of the nested entities found within this object. Defaults to empty object.  
+* `definition`: **required** A definition of the nested entities found within this object. Defaults to empty object.
 You *do not* need to define any keys in your object other than those that hold other entities. All other values will be copied to the normalized output.
 
 #### Instance Methods
@@ -254,8 +262,8 @@ const normalizedData = normalize(data, responseSchema);
 Describe a schema which is a union of multiple schemas. This is useful if you need the polymorphic behavior provided by `schema.Array` or `schema.Values` but for non-collection fields.
 
 * `definition`: **required** An object mapping the definition of the nested entities found within the input array
-* `schemaAttribute`: **required** The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.  
-Can be a string or a function. If given a function, accepts the following arguments:  
+* `schemaAttribute`: **required** The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.
+Can be a string or a function. If given a function, accepts the following arguments:
   * `value`: The input value of the entity.
   * `parent`: The parent object of the input array.
   * `key`: The key at which the input array appears on the parent object.
@@ -297,8 +305,8 @@ const normalizedData = normalize(data, { owner: unionSchema });
 Describes a map whose values follow the given schema.
 
 * `definition`: **required** A singular schema that this array contains *or* a mapping of schema to attribute values.
-* `schemaAttribute`: *optional* (required if `definition` is not a singular schema) The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.  
-Can be a string or a function. If given a function, accepts the following arguments:  
+* `schemaAttribute`: *optional* (required if `definition` is not a singular schema) The attribute on each entity found that defines what schema, per the definition mapping, to use when normalizing.
+Can be a string or a function. If given a function, accepts the following arguments:
   * `value`: The input value of the entity.
   * `parent`: The parent object of the input array.
   * `key`: The key at which the input array appears on the parent object.
@@ -337,7 +345,7 @@ For example:
 
 ```js
 const data = {
-  '1': { id: 1, type: 'admin' }, 
+  '1': { id: 1, type: 'admin' },
   '2': { id: 2, type: 'user' }
 };
 
